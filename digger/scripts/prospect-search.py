@@ -350,17 +350,14 @@ def build_company_payload(row):
 
     phone = normalize_phone_e164((row.get('phone') or '').strip())
 
-    # Build address string
-    address_parts = []
-    if row.get('address'):
-        address_parts.append(row.get('address').strip())
-    if row.get('city'):
-        address_parts.append(row.get('city').strip())
-    if row.get('state'):
-        address_parts.append(row.get('state').strip())
-    if row.get('zip'):
-        address_parts.append(row.get('zip').strip())
-    address = ', '.join(address_parts) if address_parts else ''
+    # Send street/city/state/zip as separate HubSpot properties so the
+    # standard HubSpot UI (filters, segmentation, address rendering) works.
+    # The previous version concatenated them all into `address`, which
+    # left city/state/zip blank on every record.
+    street = (row.get('address') or '').strip()
+    city   = (row.get('city') or '').strip()
+    state  = (row.get('state') or '').strip()
+    zipcd  = (row.get('zip') or '').strip()
 
     # Determine Square confidence level
     square_confidence = 'needs_review'
@@ -373,7 +370,7 @@ def build_company_payload(row):
     elif square_url:
         # Has square URL - confirm it's square
         square_confidence = 'confirmed_square'
-    
+
     # If confidence from CSV says "confirmed", upgrade to confirmed_square
     if confidence and 'confirm' in confidence.lower():
         square_confidence = 'confirmed_square'
@@ -383,14 +380,19 @@ def build_company_payload(row):
         'domain': domain,
         'phone': phone,
         'primary_website': website,  # Renamed from 'website' for clarity
-        'address': address,
-        'square_online_url': square_url,  # New field: Square URL
-        'square_confidence': square_confidence,  # New field: Confidence level
+        'address': street,            # HubSpot standard: street address only
+        'city': city,                 # HubSpot standard
+        'state': state,               # HubSpot standard
+        'zip': zipcd,                 # HubSpot standard
+        'square_online_url': square_url,  # custom: Square Online URL
+        'square_confidence': square_confidence,  # custom: confidence enum
         'keywords_found': (row.get('keywords_found') or '').strip(),
         'date_found': (row.get('date_found') or '').strip(),
     }
 
-    return payload
+    # Drop empty values so we don't stomp existing Hubspot data with blanks
+    # on update calls.
+    return {k: v for k, v in payload.items() if v}
 
 
 def normalize_domain(website):
@@ -1412,6 +1414,19 @@ def main():
             business_type = ''
 
             if place:
+                # Prefer Google Places' canonical business name over the URL-
+                # derived guess. Subdomain-extracted names like "Cafecubana"
+                # (from cafecubana.square.site) get replaced with the real
+                # business name from Google's database ("Café Cubana Bakery").
+                canonical_name = (place.get('name') or '').strip()
+                if canonical_name:
+                    # Only log when the canonical name is materially different
+                    # (ignoring whitespace + case), to keep the log readable.
+                    if (canonical_name.lower().replace(' ', '')
+                            != business_name.lower().replace(' ', '')):
+                        print(f'    📛 Renamed: {business_name!r} → {canonical_name!r}')
+                    business_name = canonical_name
+
                 full_addr = place.get('address', '')
                 address, city, state, zipcode = parse_address(full_addr)
                 phone = place.get('phone', '')
