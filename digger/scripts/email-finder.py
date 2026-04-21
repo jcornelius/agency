@@ -1095,37 +1095,14 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
         else:
             print(f'  Apollo: no results')
 
-    # ---- Stage 4: Pattern generation + SMTP verification ----
-    first_name = ''
-    last_name = ''
-    if contact_name and ' ' in contact_name:
-        parts = contact_name.split(None, 1)
-        first_name, last_name = parts[0], parts[1]
+    # ---- Stage 4 (removed): Pattern generation + SMTP verification ----
+    # Previously we fell back to generating info@/hello@/contact@/owner@/manager@
+    # addresses and SMTP-verifying them. This produced low-quality role-account
+    # emails that violated the "decision-makers only" bar, so we no longer do it.
+    # If Hunter and Apollo both miss, we return no email — sales team can
+    # reach out manually if the lead is worth it.
 
-    candidates = generate_email_patterns(domain, first_name, last_name)
-    print(f'  Patterns: {len(candidates)} candidates')
-
-    for candidate in candidates:
-        if not no_verify:
-            verified = verify_email_smtp(candidate)
-            time.sleep(2)
-            print(f'    {candidate} \u2192 {verified}')
-            if verified == 'valid':
-                confidence = compute_confidence(
-                    'pattern_verified', verified_status='valid')
-                return {
-                    'email': candidate,
-                    'email_confidence': confidence,
-                    'email_source': 'pattern_verified',
-                    'email_verified': 'valid',
-                    'contact_name': contact_name,
-                    'contact_title': contact_title,
-                    'error': '', 'domain': domain,
-                }
-        else:
-            print(f'    {candidate} \u2192 (skipped verification)')
-
-    # ---- Fallback: return best available ----
+    # ---- Fallback: return best available from Hunter/Apollo ----
     if best_result:
         confidence = compute_confidence(
             best_result['source'], best_result['confidence'])
@@ -1136,15 +1113,6 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
             'email_verified': 'unknown',
             'contact_name': best_result.get('name', ''),
             'contact_title': best_result.get('title', ''),
-            'error': '', 'domain': domain,
-        }
-
-    # Return first unverified pattern with low confidence
-    if candidates:
-        return {
-            'email': candidates[0], 'email_confidence': 10,
-            'email_source': 'pattern_unverified', 'email_verified': 'unknown',
-            'contact_name': contact_name, 'contact_title': contact_title,
             'error': '', 'domain': domain,
         }
 

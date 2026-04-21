@@ -309,20 +309,16 @@ class HubSpotClient:
 
     def associate_contact_to_company(self, company_id, contact_id):
         """Create an association between a company and contact.
-        
+
+        Uses the v4 default-association endpoint which doesn't require a
+        types body and doesn't 404 the way the deprecated v3 variant does.
+
         Returns True if successful.
         """
-        body = {
-            'types': [
-                {
-                    'associationCategory': 'HUBSPOT_DEFINED',
-                    'associationType': 'company_to_contact',
-                },
-            ],
-        }
-        resp = self._request('PUT',
-                            f'/crm/v3/objects/companies/{company_id}/associations/contacts/{contact_id}',
-                            body=body)
+        resp = self._request(
+            'PUT',
+            f'/crm/v4/objects/companies/{company_id}/associations/default/contacts/{contact_id}',
+        )
         return resp is not None and 'error' not in resp
 
     def update_company_email(self, company_id, email):
