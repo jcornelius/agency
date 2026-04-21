@@ -24,6 +24,13 @@
     <key>WorkingDirectory</key>
     <string>/Users/jc/Nest/digger/bot</string>
 
+    <!-- launchd's default PATH doesn't include git. Extend it so update.sh can run. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
     <!-- Run every hour. -->
     <key>StartInterval</key>
     <integer>3600</integer>

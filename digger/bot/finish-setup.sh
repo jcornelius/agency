@@ -127,17 +127,18 @@ fi
 
 # Give it a moment, then check the bot is actually running.
 sleep 2
-if launchctl list | grep -q com.digger.bot; then
-    PID=$(launchctl list | awk '/com\.digger\.bot\s/ {print $1}')
-    if [[ "$PID" == "-" || -z "$PID" ]]; then
-        red "  launchd loaded com.digger.bot but the process is not running."
-        red "  Check $LOGS_DIR/stderr.log for why."
-        exit 1
-    fi
-    green "  com.digger.bot running (PID $PID)"
-else
+# launchctl list format: "PID  EXIT_CODE  LABEL" (label at end of line).
+# Match by exact column 3 to avoid accidentally matching com.digger.updater.
+PID=$(launchctl list | awk '$3 == "com.digger.bot" {print $1}')
+if [[ -z "$PID" ]]; then
     red "  launchctl list does not show com.digger.bot — something went wrong."
     exit 1
+elif [[ "$PID" == "-" ]]; then
+    red "  com.digger.bot is loaded but the process is not running."
+    red "  Check $LOGS_DIR/stderr.log and $LOGS_DIR/stdout.log for why."
+    exit 1
+else
+    green "  com.digger.bot running (PID $PID)"
 fi
 
 echo

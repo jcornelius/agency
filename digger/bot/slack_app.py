@@ -20,19 +20,48 @@ import sys
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-# Load .env BEFORE importing modules that read env (command_parser, runner).
-load_dotenv()
-
-import command_parser
-import runner
-
+# Configure logging BEFORE anything that might raise, so launchd captures
+# the error in stderr.log even if we crash during module load.
+logging.basicConfig(
+    level=os.environ.get("DIGGER_LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    stream=sys.stdout,
+)
 log = logging.getLogger("digger")
+
+# Load .env from THIS file's directory, not from CWD. launchd's
+# WorkingDirectory is normally honored, but being explicit avoids any
+# "why is dotenv silently failing?" debugging on future setup issues.
+_BOT_DIR = Path(__file__).resolve().parent
+_ENV_FILE = _BOT_DIR / ".env"
+if _ENV_FILE.exists():
+    load_dotenv(_ENV_FILE)
+    log.info(".env loaded from %s", _ENV_FILE)
+else:
+    log.warning(".env not found at %s — relying on process environment", _ENV_FILE)
+
+# Fail fast with a clear message if any required token is missing. Without
+# this, an unhandled KeyError from `os.environ[...]` below would sometimes
+# be swallowed by launchd before stderr.log was flushed.
+_REQUIRED_EARLY = ["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "ANTHROPIC_API_KEY"]
+_missing_early = [k for k in _REQUIRED_EARLY if not os.environ.get(k)]
+if _missing_early:
+    log.error(
+        "Missing required env vars at startup: %s. "
+        "Check that .env exists at %s and is populated.",
+        ", ".join(_missing_early), _ENV_FILE,
+    )
+    sys.exit(2)
+
+import command_parser  # noqa: E402  (imports after env is set)
+import runner          # noqa: E402
 
 
 # --- Config ---
@@ -312,24 +341,16 @@ def _worker_loop() -> None:
 
 
 def main() -> None:
-    level = os.environ.get("DIGGER_LOG_LEVEL", "INFO").upper()
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        stream=sys.stdout,
-    )
-
-    # Sanity checks up front so we fail loudly rather than mid-conversation.
+    # (logging + early env-var check already done at module load.)
+    # Full required set — includes pipeline keys needed by the subprocess scripts.
     required = [
-        "SLACK_BOT_TOKEN", "SLACK_APP_TOKEN",
-        "ANTHROPIC_API_KEY",
         "BRAVE_API_KEY", "GOOGLE_PLACES_API_KEY",
         "HUBSPOT_PRIVATE_APP_TOKEN", "HUNTER_API_KEY",
     ]
     missing = [k for k in required if not os.environ.get(k)]
     if missing:
-        log.error("Missing required env vars: %s", ", ".join(missing))
-        log.error("Copy .env.example → .env and fill in values.")
+        log.error("Missing pipeline env vars: %s", ", ".join(missing))
+        log.error("Bot would start but searches would fail — exiting.")
         sys.exit(2)
 
     log.info("Scripts dir: %s", runner.SCRIPTS_DIR)

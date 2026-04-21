@@ -31,6 +31,15 @@
     <key>WorkingDirectory</key>
     <string>/Users/jc/Nest/digger/bot</string>
 
+    <!-- launchd starts processes with a minimal PATH that doesn't include
+         Homebrew. The pipeline shells out to `goplaces` (installed via
+         Homebrew), so we must extend PATH here. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
     <!-- Start on login and keep it running. -->
     <key>RunAtLoad</key>
     <true/>
