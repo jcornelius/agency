@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd agent: hourly git pull (no reload).
+
+  Runs update.sh without --reload, so new code lands on disk but the bot
+  keeps running the old code until a restart is triggered (via @digger pull
+  in Slack, or launchctl reload in Terminal). This avoids ever restarting
+  the bot mid-pipeline.
+
+  finish-setup.sh installs and loads this alongside the main bot agent.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.digger.updater</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/jc/Nest/digger/bot/update.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/jc/Nest/digger/bot</string>
+
+    <!-- Run every hour. -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Also run immediately on load, so a fresh install picks up any
+         commits pushed since last deploy. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/jc/Library/Logs/digger/updater.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/jc/Library/Logs/digger/updater.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
