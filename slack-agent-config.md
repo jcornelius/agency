@@ -67,3 +67,40 @@ So from each app you walk away with two tokens:
 
 - `xoxb-...` (Bot User OAuth Token)
 - `xapp-...` (App-Level Token for Socket Mode)
+
+----
+# Creating from a Manifest file
+
+## 1. Go to https://api.slack.com/apps → Create New App → From a manifest
+
+1. Select your workspace
+1. Paste the JSON below, changing just three fields:
+
+    ```
+    display_information.name → AppName
+    display_information.description → something agent-specific
+    features.bot_user.display_name → appname (lowercase)
+    ```
+
+1. Review the generated config, click **Create**
+1. On the next screen, click **Install** to Workspace → approve
+1. Copy the Bot User OAuth Token (`xoxb-...`) from OAuth & Permissions
+1. Go to Basic Information → App-Level Tokens → Generate Token and Scopes → add the `connections:write` scope → generate → copy the `xapp-...` token
+
+
+
+## 2. After your app is created from the manifest
+
+You'll land on your new app's page at `api.slack.com/apps/{APP_ID}`
+In the left sidebar, click **Basic Information** (at the top)
+Scroll down to the section titled **App-Level Tokens**
+Click **"Generate Token and Scopes"**
+In the dialog:
+
+- **Token Name:** something descriptive like `agent-socket` (only you see this)
+- Click **Add Scope** and select `connections:write`
+- (Optional) Also add `authorizations:read` if you want the app to be able to read its own install info — not required for Socket Mode but sometimes useful
+
+
+- Click **"Generate"**
+Slack shows the token once — it starts with `xapp-1-....` Copy it immediately and store it somewhere safe. You can't retrieve it later, only regenerate.
