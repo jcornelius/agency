@@ -1485,8 +1485,19 @@ def main():
                 print(f'    ⏭ Skipping: incomplete address ({address}, {city}, {state} {zipcode})')
                 continue
 
-            # Must be in Atlanta metro area (zip starts with 30)
-            if not zipcode.startswith('30'):
+            # Must be in one of the requested search areas.
+            # Match by city+state (case-insensitive). If the user supplied a
+            # bare city like "Atlanta", state-match is skipped.
+            in_any_area = False
+            for area_str in areas:
+                ac, as_ = parse_search_area(area_str)
+                if (
+                    ac.lower() == city.lower()
+                    and (not as_ or as_.upper() == state.upper())
+                ):
+                    in_any_area = True
+                    break
+            if not in_any_area:
                 print(f'    ⏭ Out of area: {business_name} ({city}, {state} {zipcode})')
                 continue
 

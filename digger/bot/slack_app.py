@@ -289,13 +289,27 @@ def _process_job(job: Job) -> None:
         log.info("heartbeat: %s — %s", hb.kind, hb.message)
         now = time.monotonic()
         if hb.kind == "search_complete":
-            # Pivot message: combines the result + what's next.
             new = hb.data.get("new", 0)
             total = hb.data.get("total", 0)
+            if new == 0:
+                # Don't preview email enrichment — runner will emit no_results
+                # next, which becomes the final message for this run.
+                _post(
+                    job.channel, job.thread_ts,
+                    f":mag: Search complete — no new companies matched "
+                    f"(Hubspot has {total} total for this area already).",
+                )
+            else:
+                _post(
+                    job.channel, job.thread_ts,
+                    f":white_check_mark: Found {new} new companies ({total} total after dedup). "
+                    f"Now looking for emails...",
+                )
+            last_post[0] = now
+        elif hb.kind == "no_results":
             _post(
                 job.channel, job.thread_ts,
-                f":white_check_mark: Found {new} new companies ({total} total after dedup). "
-                f"Now looking for emails...",
+                ":checkered_flag: Done. Nothing new to enrich.",
             )
             last_post[0] = now
         elif hb.kind == "email_complete":

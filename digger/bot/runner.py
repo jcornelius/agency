@@ -299,7 +299,8 @@ def run_full_pipeline(
     cmd: Command,
     on_heartbeat: HeartbeatCallback,
 ) -> tuple[ProspectResult, EmailResult]:
-    """Run prospect-search, then email-finder. Bubbles heartbeats to the callback."""
+    """Run prospect-search, then email-finder (only if anything new was found).
+    Bubbles heartbeats to the callback."""
     prospect = run_prospect_search(cmd, on_heartbeat)
     if prospect.exit_code != 0:
         on_heartbeat(Heartbeat(
@@ -308,6 +309,17 @@ def run_full_pipeline(
             data={"exit_code": prospect.exit_code},
         ))
         return prospect, EmailResult(exit_code=-999)
+
+    # If the search found nothing new, don't bother running the email finder
+    # — it would iterate all Hubspot companies missing emails, which is useful
+    # but confusing in the context of a search that returned zero results.
+    if prospect.new_companies == 0:
+        on_heartbeat(Heartbeat(
+            kind="no_results",
+            message="No new companies found — skipping email enrichment.",
+            data={"total": prospect.total_companies},
+        ))
+        return prospect, EmailResult(exit_code=0)
 
     email = run_email_finder(on_heartbeat)
     if email.exit_code != 0:
