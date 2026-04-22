@@ -8,7 +8,7 @@ back to the same Slack thread, and writes everything to HubSpot.
 User in Slack:   @digger find all pizza places within 10 miles of downtown Athens GA
 
 Bot (thread):    :mag: Searching for pizza/pizzeria in Athens GA and 5 nearby towns.
-Bot (thread):    :white_check_mark: Found 23 new companies (147 total after dedup).
+Bot (thread):    :white_check_mark: Found 23 new companies (147 total after dedupe).
                  Now looking for emails...
 Bot (thread):    :tada: Done. 14 new decision-maker contacts, 9 company emails
                  added to HubSpot.

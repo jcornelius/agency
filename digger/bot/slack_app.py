@@ -302,7 +302,7 @@ def _process_job(job: Job) -> None:
             else:
                 _post(
                     job.channel, job.thread_ts,
-                    f":white_check_mark: Found {new} new companies ({total} total after dedup). "
+                    f":white_check_mark: Found {new} new companies ({total} total after dedupe). "
                     f"Now looking for emails...",
                 )
             last_post[0] = now
