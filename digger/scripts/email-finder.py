@@ -232,6 +232,70 @@ def is_role_email(email):
     return local in ROLE_PREFIXES
 
 
+# Common free/public email providers — always acceptable as contact emails
+FREE_EMAIL_DOMAINS = {
+    'gmail.com', 'googlemail.com',
+    'yahoo.com', 'ymail.com', 'yahoo.co.uk', 'yahoo.com.au',
+    'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'msn.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'aol.com',
+    'protonmail.com', 'proton.me',
+    'zoho.com',
+}
+
+# Third-party platform domains that are never a company's own email domain
+THIRD_PARTY_PLATFORM_DOMAINS = {
+    'linktr.ee', 'linktree.com',
+    'bio.link',
+    'beacons.ai',
+    'campsite.bio',
+    'later.com',
+    'taplink.cc',
+    'carrd.co',
+    'squarespace.com',
+    'wix.com',
+    'weebly.com',
+    'wordpress.com',
+    'blogspot.com',
+    'tumblr.com',
+    'substack.com',
+    'mailchimp.com',
+    'yelp.com',
+    'tripadvisor.com',
+    'doordash.com',
+    'ubereats.com',
+    'grubhub.com',
+    'toasttab.com',
+    'clover.com',
+    'facebook.com',
+    'instagram.com',
+    'twitter.com',
+    'x.com',
+    'tiktok.com',
+    'youtube.com',
+    'linkedin.com',
+}
+
+
+def email_domain_matches(email, marketing_domain):
+    """Return True if the email is acceptable for this company.
+
+    Accepts if:
+    - email domain is a well-known free/public provider (gmail, yahoo, etc.)
+    - email domain matches the company's marketing domain (case-insensitive)
+
+    Rejects anything else — including third-party platforms like linktr.ee.
+    """
+    if not email or '@' not in email:
+        return False
+    email_domain = email.split('@', 1)[1].lower().strip()
+    if email_domain in FREE_EMAIL_DOMAINS:
+        return True
+    if marketing_domain and email_domain == marketing_domain.lower().strip():
+        return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # OnePageCRM client — DEPRECATED, do not use
 # ---------------------------------------------------------------------------
@@ -438,13 +502,15 @@ def extract_domain(row):
     website = (row.get('website') or '').strip()
     if website:
         domain = normalize_domain(website)
-        if domain and '.square.site' not in domain:
+        if (domain and '.square.site' not in domain
+                and domain not in THIRD_PARTY_PLATFORM_DOMAINS):
             return domain
 
     square_url = (row.get('square_url') or '').strip()
     if square_url:
         domain = normalize_domain(square_url)
-        if domain and '.square.site' not in domain:
+        if (domain and '.square.site' not in domain
+                and domain not in THIRD_PARTY_PLATFORM_DOMAINS):
             return domain
 
     return ''
@@ -928,6 +994,10 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
     business_name = (row.get('business_name') or '').strip()
     domain = extract_domain(row)
 
+    # Marketing domain for email validation: prefer website, not square_url
+    _raw_website = (row.get('website') or '').strip()
+    marketing_domain = normalize_domain(_raw_website) if _raw_website else domain
+
     # Try to guess domain if none found
     if not domain:
         print(f'  Domain: (none \u2014 guessing from name...)')
@@ -999,15 +1069,18 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
                 confidence = compute_confidence(
                     'hunter_domain', best['confidence'], verified)
                 if verified != 'invalid':
-                    return {
-                        'email': best['email'],
-                        'email_confidence': confidence,
-                        'email_source': 'hunter_domain',
-                        'email_verified': verified,
-                        'contact_name': contact_name,
-                        'contact_title': contact_title,
-                        'error': '', 'domain': domain,
-                    }
+                    if not email_domain_matches(best['email'], marketing_domain):
+                        print(f'  \u26a0 Email domain mismatch, skipping: {best["email"]}')
+                    else:
+                        return {
+                            'email': best['email'],
+                            'email_confidence': confidence,
+                            'email_source': 'hunter_domain',
+                            'email_verified': verified,
+                            'contact_name': contact_name,
+                            'contact_title': contact_title,
+                            'error': '', 'domain': domain,
+                        }
 
             # Save as fallback
             best_result = {
@@ -1036,15 +1109,18 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
                     confidence = compute_confidence(
                         'hunter_finder', found['confidence'], verified)
                     if verified != 'invalid':
-                        return {
-                            'email': found['email'],
-                            'email_confidence': confidence,
-                            'email_source': 'hunter_finder',
-                            'email_verified': verified,
-                            'contact_name': contact_name,
-                            'contact_title': contact_title,
-                            'error': '', 'domain': domain,
-                        }
+                        if not email_domain_matches(found['email'], marketing_domain):
+                            print(f'  \u26a0 Email domain mismatch, skipping: {found["email"]}')
+                        else:
+                            return {
+                                'email': found['email'],
+                                'email_confidence': confidence,
+                                'email_source': 'hunter_finder',
+                                'email_verified': verified,
+                                'contact_name': contact_name,
+                                'contact_title': contact_title,
+                                'error': '', 'domain': domain,
+                            }
         else:
             print(f'  Hunter: no results')
 
@@ -1083,15 +1159,18 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
                 verified = 'unknown'
             confidence = compute_confidence('apollo', verified_status=verified)
             if verified != 'invalid':
-                return {
-                    'email': person['email'],
-                    'email_confidence': confidence,
-                    'email_source': 'apollo',
-                    'email_verified': verified,
-                    'contact_name': a_name or contact_name,
-                    'contact_title': person['title'] or contact_title,
-                    'error': '', 'domain': domain,
-                }
+                if not email_domain_matches(person['email'], marketing_domain):
+                    print(f'  \u26a0 Email domain mismatch, skipping: {person["email"]}')
+                else:
+                    return {
+                        'email': person['email'],
+                        'email_confidence': confidence,
+                        'email_source': 'apollo',
+                        'email_verified': verified,
+                        'contact_name': a_name or contact_name,
+                        'contact_title': person['title'] or contact_title,
+                        'error': '', 'domain': domain,
+                    }
         else:
             print(f'  Apollo: no results')
 
@@ -1104,17 +1183,20 @@ def process_business(row, config, dry_run=False, hunter_only=False, no_verify=Fa
 
     # ---- Fallback: return best available from Hunter/Apollo ----
     if best_result:
-        confidence = compute_confidence(
-            best_result['source'], best_result['confidence'])
-        return {
-            'email': best_result['email'],
-            'email_confidence': confidence,
-            'email_source': best_result['source'],
-            'email_verified': 'unknown',
-            'contact_name': best_result.get('name', ''),
-            'contact_title': best_result.get('title', ''),
-            'error': '', 'domain': domain,
-        }
+        if not email_domain_matches(best_result['email'], marketing_domain):
+            print(f'  \u26a0 Best-result email domain mismatch, skipping: {best_result["email"]}')
+        else:
+            confidence = compute_confidence(
+                best_result['source'], best_result['confidence'])
+            return {
+                'email': best_result['email'],
+                'email_confidence': confidence,
+                'email_source': best_result['source'],
+                'email_verified': 'unknown',
+                'contact_name': best_result.get('name', ''),
+                'contact_title': best_result.get('title', ''),
+                'error': '', 'domain': domain,
+            }
 
     return {
         'email': '', 'email_confidence': 0, 'email_source': 'none',
