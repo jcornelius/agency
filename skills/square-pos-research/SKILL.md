@@ -27,14 +27,11 @@ for HOW to conduct the research.
 - Ice cream and dessert shops
 
 ### Geography
-Default: **Atlanta, GA metro area**
+The user defines the target geography at the start of each research session.
+Common scopes include a city, metro area, or list of neighborhoods. If no
+geography is specified, ask before starting.
 
-Include surrounding areas unless told otherwise:
-- Atlanta proper (Midtown, Buckhead, Downtown, West End, East Atlanta, etc.)
-- Decatur, Sandy Springs, Roswell, Marietta, Alpharetta
-- Smyrna, Kennesaw, Duluth, Lawrenceville, Stone Mountain
-
-The user may change or expand the geography via Slack. If they do, note the
+The user may expand or change the geography mid-session. If they do, note the
 new scope and continue.
 
 ---
@@ -84,40 +81,40 @@ types and neighborhoods.
 
 ### High-Value Queries
 ```
-site:square.site restaurant Atlanta
-site:square.site pizza Atlanta
-site:square.site coffee Atlanta
-site:square.site bakery Atlanta
-"powered by Square Online" restaurant Atlanta
-"order online" restaurant Atlanta square
-"Square Online" menu Atlanta
+site:square.site restaurant [city]
+site:square.site pizza [city]
+site:square.site coffee [city]
+site:square.site bakery [city]
+"powered by Square Online" restaurant [city]
+"order online" restaurant [city] square
+"Square Online" menu [city]
 ```
 
 ### Neighborhood-Specific Queries
 ```
-restaurant "order online" Midtown Atlanta
-pizza delivery Buckhead Atlanta "square"
-coffee shop Decatur GA "order online"
-restaurant East Atlanta Village "square.site"
+restaurant "order online" [neighborhood] [city]
+pizza delivery [neighborhood] [city] "square"
+coffee shop [city] "order online"
+restaurant [neighborhood] "square.site"
 ```
 
 ### Directory and Review Site Queries
 ```
-site:yelp.com restaurant Atlanta "order on square"
-"Atlanta restaurant" "online ordering" "square"
+site:yelp.com restaurant [city] "order on square"
+"[city] restaurant" "online ordering" "square"
 ```
 
 ### Supplementary Approaches
 - If you find one Square restaurant, check if Square has a local directory
   or marketplace page that lists other nearby businesses
-- Look for Square seller stories or case studies mentioning Atlanta restaurants
-- Check `ordering.square.site` with Atlanta-area business names
+- Look for Square seller stories or case studies mentioning restaurants in the target area
+- Check `ordering.square.site` with business names from the target area
 
 ---
 
 ## CSV Schema
 
-Output file: `research/square-pos-atlanta.csv`
+Output file: `research/square-pos-[location].csv`
 
 Headers (in this exact order):
 
@@ -130,7 +127,7 @@ business_name,business_type,address,city,state,zip,phone,email,contact_name,webs
 | `business_name` | Legal or common business name | "Joe's Pizza" |
 | `business_type` | Category from target list | "pizzeria" |
 | `address` | Street address if available | "123 Peachtree St NE" |
-| `city` | City | "Atlanta" |
+| `city` | City | "Chicago" |
 | `state` | State abbreviation | "GA" |
 | `zip` | ZIP code if available | "30308" |
 | `phone` | Phone number — REQUIRED, search until found | "(404) 555-1234" |

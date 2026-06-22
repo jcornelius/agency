@@ -120,8 +120,8 @@ Do NOT accumulate results in memory and write them all at once. After you inspec
 and qualify a business, append it to the CSV file right away — before moving on
 to the next candidate. This ensures:
 - No data is lost if the session times out or is interrupted
-- Charlie (ops agent) can monitor progress by reading the CSV at any time
-- The user can see results building up in real time
+- The user can monitor progress by reading the CSV at any time
+- Results build up in real time
 
 **CSV header — verify before every session:**
 At the start of each session, read the existing CSV header (or create the file)
