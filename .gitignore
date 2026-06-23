@@ -1,0 +1,33 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime output (regenerated on each run; bot writes to these)
+digger/research/*.csv
+digger/bot/logs/
+*.log
+
+# macOS
+.DS_Store
+._*
+
+# Editor cruft
+.vscode/
+.idea/
+*.swp
+*~
+
+# Legacy OpenClaw artifacts (shouldn't appear in Nest, but just in case)
+.openclaw/
+memory/
