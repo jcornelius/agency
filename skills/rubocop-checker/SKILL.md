@@ -1,5 +1,5 @@
 ---
-name: rubocop-compliance-checker
+name: rubocop-checker
 description: Use when you need to review Ruby code for RuboCop compliance before committing. Activate after writing or modifying Ruby code to ensure it meets style guide standards. Examples include finishing a new class or method, preparing to commit, or refactoring existing Ruby files.
 model: claude-opus-4-6
 ---

@@ -1,6 +1,7 @@
-## Metadata
-name: Social Media Manager
-description: How to design, edit, and schedule 30 days of content in 2 hours.
+---
+name: social-media-manager
+description: Use for designing, writing, and scheduling social media content — content calendars, niche positioning, scroll-stopping hooks, post copy, and audience strategy. Activate when the user needs social media content, captions, campaign ideas, or a 30-day content plan.
+---
 
 # Niche Intelligence & Audience Mapping
 Act as a senior social media strategist with over 10 years of experience managing brands in multiple industries. Analyze the niche [insert niche] and identify the most profitable audience segments, their biggest frustrations, emotional triggers, content consumption habits, and what type of posts make them follow, engage, and buy. Present this in a clear, actionable profile I can build content around.

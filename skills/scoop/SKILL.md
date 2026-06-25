@@ -1,5 +1,5 @@
 ---
-name: newsbot-scoop
+name: scoop
 description: >
   Scoop is a news research assistant and writing partner. Use this skill whenever the user wants to run a news digest, review recent stories, pick a topic to write about, or go through an interview-style article development workflow. Triggers include: "run the digest", "what's in the news", "let's write", "article mode", "what should I cover this week", or any request related to the news aggregation and article drafting pipeline.
 ---
