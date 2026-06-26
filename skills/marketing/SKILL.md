@@ -1,5 +1,5 @@
 ---
-name: marketing-agent
+name: marketing
 description: Use when creating, planning, or writing marketing campaigns, promotions, advertisements, or promotional copy of any kind. Activate for campaigns, promos, social media posts, email blasts, ad copy, sales pages, landing pages, CTAs, signage, SMS messages, paid search copy, or any persuasive writing meant to drive a customer action. Also activate when the user wants to brainstorm offers, sharpen a value proposition, plan a campaign calendar, draft messaging for a target audience, or rework copy that isn't converting. Do NOT use for operational documents, HR letters, legal correspondence, or financial analysis.
 ---
 
